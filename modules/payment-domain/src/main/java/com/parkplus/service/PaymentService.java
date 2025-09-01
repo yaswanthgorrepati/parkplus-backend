@@ -198,19 +198,10 @@ public class PaymentService {
                     ? new BookingDtos.PaymentInfo(payment.getId(), payment.getStatus().name(), payment.getOrderId(), payment.getPaymentId())
                     : null;
 
-            return new BookingDtos.BookingHistoryDto(
-                    booking.getId(),
-                    booking.getReferenceCode(),
-                    booking.getStatus().name(),
-                    booking.getStartDate(),
-                    booking.getEndDate(),
-                    booking.getSpacesQty(),
-                    booking.getTotalPaise(),
-                    booking.getCurrency(),
-                    listingInfo,
-                    paymentInfo,
-                    vehicles
-            );
+            return new BookingDtos.BookingHistoryDto(booking.getId(), booking.getReferenceCode(),
+                    booking.getStatus().name(), booking.getStartDate(), booking.getEndDate(),
+                    booking.getSpacesQty(), booking.getTotalPaise(), booking.getCurrency(),
+                    listingInfo, paymentInfo, vehicles);
         });
     }
 
