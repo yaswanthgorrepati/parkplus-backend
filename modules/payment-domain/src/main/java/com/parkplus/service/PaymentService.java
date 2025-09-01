@@ -3,11 +3,10 @@ package com.parkplus.service;
 
 import com.parkplus.common.error.ApiException;
 import com.parkplus.common.error.ErrorCodes;
-import com.parkplus.entities.AvailabilityCalendar;
-import com.parkplus.entities.Booking;
-import com.parkplus.entities.Listing;
-import com.parkplus.entities.Payment;
+import com.parkplus.dto.BookingDtos;
+import com.parkplus.entities.*;
 import com.parkplus.repositories.AvailabilityCalendarRepository;
+import com.parkplus.repositories.ListingImageRepository;
 import com.parkplus.repositories.ListingRepository;
 import com.parkplus.repository.BookingRepository;
 import com.parkplus.repository.PaymentRepository;
@@ -17,10 +16,15 @@ import com.razorpay.Utils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,6 +37,8 @@ public class PaymentService {
     private BookingRepository bookingRepository;
     @Autowired
     private ListingRepository listingRepository;
+    @Autowired
+    private ListingImageRepository listingImageRepository;
     @Autowired
     private AvailabilityCalendarRepository availabilityCalendarRepository;
     @Value("${razorpay.keyId:}")
@@ -160,10 +166,60 @@ public class PaymentService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public Page<BookingDtos.BookingHistoryDto> getBookingHistory(UUID customerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startDate").descending());
+        Page<Booking> bookings = bookingRepository.findByCustomerId(customerId, pageable);
+
+        return bookings.map(booking -> {
+            // Vehicles
+            List<BookingDtos.BookingVehicleDto> vehicles = booking.getBookingVehicles().stream()
+                    .map(bookingVehicle ->
+                            new BookingDtos.BookingVehicleDto(bookingVehicle.getVehicleType(), bookingVehicle.getRegistrationNumber()))
+                    .toList();
+
+            // Listing info
+            Listing listing = listingRepository.findById(booking.getListingId()).orElse(null);
+
+            Optional<String> imgUrl = listingImageRepository.findByListingIdOrderByPositionAsc(listing.getId()).stream()
+                    .filter(img -> img.getPosition() == 0)
+                    .toList().stream()
+                    .map(ListingImage::getUrl)
+                    .findFirst();
+
+            BookingDtos.ListingInfo listingInfo = (listing != null)
+                    ? (new BookingDtos.ListingInfo(listing.getId(), listing.getTitle(), listing.getCity(),
+                    listing.getState(), listing.getType().name(), imgUrl.orElse(null)))
+                    : null;
+
+            // Payment info
+            Payment payment = paymentRepository.findByBookingId(booking.getId()).orElse(null);
+            BookingDtos.PaymentInfo paymentInfo = (payment != null)
+                    ? new BookingDtos.PaymentInfo(payment.getId(), payment.getStatus().name(), payment.getOrderId(), payment.getPaymentId())
+                    : null;
+
+            return new BookingDtos.BookingHistoryDto(
+                    booking.getId(),
+                    booking.getReferenceCode(),
+                    booking.getStatus().name(),
+                    booking.getStartDate(),
+                    booking.getEndDate(),
+                    booking.getSpacesQty(),
+                    booking.getTotalPaise(),
+                    booking.getCurrency(),
+                    listingInfo,
+                    paymentInfo,
+                    vehicles
+            );
+        });
+    }
+
     // DTOs returned by service
     public record CreateOrderResponse(String orderId, String keyId, int amount, String currency) {
     }
 
     public record VerifyResponse(boolean ok, String bookingStatus) {
     }
+
+
 }

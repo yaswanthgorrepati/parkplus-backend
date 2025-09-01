@@ -3,6 +3,8 @@ package com.parkplus.entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -18,6 +20,10 @@ public class Booking {
 
     @Column(length = 36, columnDefinition = "CHAR(36)", nullable = false)
     private UUID customerId;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "booking_id")  // FK lives in booking_vehicles
+    private List<BookingVehicle> bookingVehicles = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -48,7 +54,7 @@ public class Booking {
     private String referenceCode; // e.g., BK-2025-XXXX
 
     public enum Status {
-         AWAITING_PAYMENT, PAID, ACTIVE, COMPLETED, CANCELLED, REFUNDED
+        AWAITING_PAYMENT, PAID, ACTIVE, COMPLETED, CANCELLED, REFUNDED
     }
 
     public UUID getId() {
@@ -73,6 +79,14 @@ public class Booking {
 
     public void setCustomerId(UUID customerId) {
         this.customerId = customerId;
+    }
+
+    public List<BookingVehicle> getBookingVehicles() {
+        return bookingVehicles;
+    }
+
+    public void setBookingVehicles(List<BookingVehicle> bookingVehicles) {
+        this.bookingVehicles = bookingVehicles;
     }
 
     public Status getStatus() {

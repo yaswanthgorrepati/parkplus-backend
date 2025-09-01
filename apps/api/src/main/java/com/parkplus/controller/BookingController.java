@@ -2,13 +2,12 @@ package com.parkplus.controller;
 
 import com.parkplus.dto.BookingDtos;
 import com.parkplus.service.BookingService;
+import com.parkplus.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -17,6 +16,9 @@ import java.util.UUID;
 public class BookingController {
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private PaymentService paymentService;
 
     // POST /api/v1/bookings/preview  (public)
     @PostMapping("/preview")
@@ -38,7 +40,8 @@ public class BookingController {
                 UUID.fromString(bookingCreateRequest.listingId()),
                 bookingCreateRequest.startDate(),
                 bookingCreateRequest.endDate(),
-                bookingCreateRequest.spacesQty()
+                bookingCreateRequest.spacesQty(),
+                bookingCreateRequest.vehicles()
         );
     }
 
@@ -51,4 +54,20 @@ public class BookingController {
 //        var updated = svc.decide(id, UUID.fromString(auth.getName()), accept);
 //        return Map.of("id", updated.getId(), "status", updated.getStatus());
 //    }
+
+    @GetMapping("/{id}")
+    public BookingDtos.BookingResponse getById(Authentication auth, @PathVariable(name = "id") UUID id) {
+        UUID customerId = UUID.fromString(auth.getName()); // subject from JWT
+        return bookingService.getById(id, customerId);
+    }
+
+    // BookingController.java
+    @GetMapping("/history")
+    public Page<BookingDtos.BookingHistoryDto> getHistory(Authentication auth,
+                                                          @RequestParam(name = "page", defaultValue = "0") int page,
+                                                          @RequestParam(name = "size", defaultValue = "10") int size) {
+        UUID customerId = UUID.fromString(auth.getName());
+        return paymentService.getBookingHistory(customerId, page, size);
+    }
+
 }
