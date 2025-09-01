@@ -1,14 +1,16 @@
 package com.parkplus.service;
 
+import ch.qos.logback.core.util.StringUtil;
 import com.parkplus.common.error.ApiException;
 import com.parkplus.common.error.ErrorCodes;
 import com.parkplus.dto.AvailabilityDtos;
 import com.parkplus.dto.ListingDtos;
 import com.parkplus.entities.*;
-import com.parkplus.repositories.AvailabilityCalendarRepository;
-import com.parkplus.repositories.ListingFacilityRepository;
-import com.parkplus.repositories.ListingImageRepository;
-import com.parkplus.repositories.ListingRepository;
+import com.parkplus.repositories.*;
+import com.parkplus.user.entities.Profile;
+import com.parkplus.user.entities.User;
+import com.parkplus.user.repository.ProfileRepository;
+import com.parkplus.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -33,10 +36,21 @@ public class ListingService {
     @Autowired
     private ListingImageRepository listingImageRepository;
     @Autowired
-    private ListingFacilityRepository listingFacilityRepository;
+    private ListingAmenityRepository listingAmenityRepository;
     @Autowired
     private AvailabilityCalendarRepository availabilityCalendarRepository;
-
+    @Autowired
+    private ListingVehicleTypeRepository listingVehicleTypeRepository;
+    @Autowired
+    private ListingFacilityTypeRepository listingFacilityTypeRepository;
+    @Autowired
+    private ListingSpaceTypeRepository listingSpaceTypeRepository;
+    @Autowired
+    private ListingBadgeTypeRepository listingBadgeTypeRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private ProfileRepository profileRepository;
 
     @Transactional
     public UUID create(UUID hostId, ListingDtos.ListingCreateRequest request) {
@@ -46,6 +60,7 @@ public class ListingService {
         listing.setType(Listing.Type.valueOf(request.type()));
         listing.setTitle(request.title());
         listing.setDescription(request.description());
+        listing.setAccessibility(request.accessibility());
         listing.setCity(request.city());
         listing.setState(request.state());
         listing.setAddressLine(request.addressLine());
@@ -56,11 +71,36 @@ public class ListingService {
         listing.setBasePricePerDayPaise(request.basePricePerDayPaise());
         listingRepository.save(listing);
 
-        if (request.facilities() != null) {
-            for (String facility : request.facilities()) {
-                listingFacilityRepository.save(new ListingFacility(new ListingFacilityId(listing.getId(), facility)));
+        if (request.amenities() != null) {
+            for (String amenity : request.amenities()) {
+                listingAmenityRepository.save(new ListingAmenity(new ListingAmenityId(listing.getId(), amenity)));
             }
         }
+
+        if (request.vehicleTypes() != null) {
+            for (String vehicleType : request.vehicleTypes()) {
+                listingVehicleTypeRepository.save(new ListingVehicleType(new ListingVehicleTypeId(vehicleType, listing.getId())));
+            }
+        }
+
+        if (request.facilityTypes() != null) {
+            for (String facilityType : request.facilityTypes()) {
+                listingFacilityTypeRepository.save(new ListingFacilityType(new ListingFacilityTypeId(facilityType, listing.getId())));
+            }
+        }
+
+        if (request.spaceTypes() != null) {
+            for (String spaceType : request.spaceTypes()) {
+                listingSpaceTypeRepository.save(new ListingSpaceType(new ListingSpaceTypeId(listing.getId(), spaceType)));
+            }
+        }
+
+        if (request.badgeTypes() != null) {
+            for (String badgeType : request.badgeTypes()) {
+                listingBadgeTypeRepository.save(new ListingBadgeType(new ListingBadgeTypeId(listing.getId(), badgeType)));
+            }
+        }
+
         if (request.imageUrls() != null) {
             int pos = 0;
             for (String url : request.imageUrls()) {
@@ -79,14 +119,29 @@ public class ListingService {
         Listing listing = listingRepository.findById(id).orElseThrow(() ->
                 new ApiException(ErrorCodes.NOT_FOUND, "Listing not found", 404));
 
-        List<String> img = listingImageRepository.findByListingIdOrderByPositionAsc(id).stream().map(ListingImage::getUrl).toList();
+        List<String> listingImages = listingImageRepository.findByListingIdOrderByPositionAsc(id).stream().map(ListingImage::getUrl).toList();
 
-        List<String> fs = listingFacilityRepository.findById_ListingId(id).stream().map(x -> x.getId().getFacility()).toList();
+        List<String> listingAmenities = listingAmenityRepository.findById_ListingId(id).stream().map(x -> x.getId().getAmenity()).toList();
+
+        List<String> listingVehicleTypes = listingVehicleTypeRepository.findById_ListingId(id).stream().map(x -> x.getId().getVehicleType()).toList();
+
+        List<String> listingFaclityType = listingFacilityTypeRepository.findById_ListingId(id).stream().map(x -> x.getId().getFacilityType()).toList();
+
+        List<String> listingSpaceType = listingSpaceTypeRepository.findById_ListingId(id).stream().map(x -> x.getId().getSpaceType()).toList();
+
+        List<String> listingBadgeType = listingBadgeTypeRepository.findById_ListingId(id).stream().map(x -> x.getId().getBadgeType()).toList();
+
+        User user = userRepository.getReferenceById(listing.getHostId());
+        Profile profile = profileRepository.getReferenceById(user.getId());
+
+
+        ListingDtos.HostDetails hostDetails = new ListingDtos.HostDetails(StringUtil.notNullNorEmpty(user.getEmail()), StringUtil.notNullNorEmpty(user.getPhoneNumber()), StringUtil.notNullNorEmpty(profile.getGovtIdNumber()));
+        ListingDtos.Host host = new ListingDtos.Host(profile.getFirstName() + " " + profile.getLastName(), profile.getAvatarUrl(), hostDetails);
 
         return new ListingDtos.ListingDetailsResponse(
-
-                listing.getId().toString(), listing.getTitle(), listing.getDescription(), listing.getCity(), listing.getState(),
-                listing.getBasePricePerDayPaise(), listing.getCurrency(), listing.getCapacitySpaces(), fs, img
+                listing.getId().toString(), listing.getTitle(), listing.getDescription(), listing.getAccessibility(), listing.getCity(), listing.getState(),
+                listing.getBasePricePerDayPaise(), listing.getCurrency(), listing.getCapacitySpaces(), listingAmenities,
+                listingVehicleTypes, listingFaclityType, listingSpaceType, listingBadgeType, listingImages, host
         );
     }
 
@@ -94,7 +149,7 @@ public class ListingService {
         Listing.Type type = Listing.Type.valueOf(Optional.ofNullable(listingSearchQuery.type()).orElse("PARKING"));
         String city = Optional.ofNullable(listingSearchQuery.city()).orElse("");
         int page = Optional.ofNullable(listingSearchQuery.page()).orElse(0);
-        int size = Optional.ofNullable(listingSearchQuery.size()).orElse(12);
+        int size = Optional.ofNullable(listingSearchQuery.size()).orElse(4);
 
         Page<Listing> pageResponse = listingRepository.findByTypeAndVisibilityAndCityIgnoreCaseContaining(
                 type, Listing.Visibility.PUBLISHED, city, PageRequest.of(page, size, Sort.by("createdAt").descending())
@@ -105,6 +160,7 @@ public class ListingService {
         LocalDate endDate = listingSearchQuery.eDate();
         Integer qty = listingSearchQuery.qty();
         List<Listing> filtered = new ArrayList<>(pageResponse.getContent());
+
         if (startDate != null && endDate != null && qty != null && !endDate.isBefore(startDate)) {
             long totalDaysRequested = startDate.until(endDate).getDays();
             filtered = filtered.stream().filter(l -> {
@@ -113,10 +169,18 @@ public class ListingService {
             }).collect(Collectors.toList());
         }
 
+
         List<ListingDtos.ListingSearchResponse> listingSearchResponses = filtered.stream()
-                .map(listing -> new ListingDtos.ListingSearchResponse(
-                        listing.getId().toString(), listing.getTitle(), listing.getCity(), listing.getState(),
-                        listing.getBasePricePerDayPaise(), listing.getCurrency()))
+                .map(listing -> {
+
+                    Optional<String> imgUrl = listingImageRepository.findByListingIdOrderByPositionAsc(listing.getId()).stream().filter(img -> img.getPosition() == 0).toList().stream().map(ListingImage::getUrl).findFirst();
+                    List<String> listingBadgeType = listingBadgeTypeRepository.findById_ListingId(listing.getId()).stream().map(x -> x.getId().getBadgeType()).toList();
+
+                    return new ListingDtos.ListingSearchResponse(
+                            listing.getId().toString(), listing.getTitle(), listing.getCapacitySpaces(), imgUrl.orElse(null),
+                            listing.getCity(), listing.getState(),
+                            listing.getBasePricePerDayPaise(), listing.getCurrency(), listingBadgeType);
+                })
                 .toList();
 
         return new PageImpl<>(listingSearchResponses, pageResponse.getPageable(), pageResponse.getTotalElements());

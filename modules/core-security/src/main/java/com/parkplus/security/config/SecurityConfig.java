@@ -38,7 +38,9 @@ public class SecurityConfig {
                                 //razor pay payment
                                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/payments/create-order").hasAnyRole("CUSTOMER","HOST","ADMIN")
                                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/payments/verify").hasAnyRole("CUSTOMER","HOST","ADMIN")
-
+                                //mastrData
+                                .requestMatchers(HttpMethod.GET, "/api/v1/master/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/master/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

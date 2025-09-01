@@ -26,6 +26,8 @@ public class Listing {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    private String accessibility;
+
     private String addressLine;
 
     private String city;
@@ -95,6 +97,14 @@ public class Listing {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAccessibility() {
+        return accessibility;
+    }
+
+    public void setAccessibility(String accessibility) {
+        this.accessibility = accessibility;
     }
 
     public String getAddressLine() {
