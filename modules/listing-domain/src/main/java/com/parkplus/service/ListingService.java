@@ -18,14 +18,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -169,6 +167,51 @@ public class ListingService {
             }).collect(Collectors.toList());
         }
 
+        List<String> vehicleTypes = listingSearchQuery.vehicleTypes();
+        List<String> facilityTypes = listingSearchQuery.facilityTypes();
+        List<String> spaceTypes = listingSearchQuery.spaceTypes();
+
+        if (!CollectionUtils.isEmpty(vehicleTypes)) {
+            Set<String> requestedTypes = vehicleTypes.stream().map(String::toLowerCase).collect(Collectors.toSet());
+
+            filtered = filtered.stream().filter(listing -> {
+                List<ListingVehicleType> listingVehicleTypes =
+                        listingVehicleTypeRepository.findById_ListingId(listing.getId());
+                Set<String> dbTypes = listingVehicleTypes.stream()
+                        .map(lvt -> lvt.getId().getVehicleType().toLowerCase())
+                        .collect(Collectors.toSet());
+
+                return dbTypes.containsAll(requestedTypes);
+            }).toList();
+        }
+
+        if (!CollectionUtils.isEmpty(facilityTypes)) {
+            Set<String> requestedTypes = facilityTypes.stream().map(String::toLowerCase).collect(Collectors.toSet());
+
+            filtered = filtered.stream().filter(listing -> {
+                List<ListingFacilityType> listingFacilityTypes =
+                        listingFacilityTypeRepository.findById_ListingId(listing.getId());
+                Set<String> dbTypes = listingFacilityTypes.stream()
+                        .map(lvt -> lvt.getId().getFacilityType().toLowerCase())
+                        .collect(Collectors.toSet());
+
+                return dbTypes.containsAll(requestedTypes);
+            }).toList();
+        }
+
+        if (!CollectionUtils.isEmpty(spaceTypes)) {
+            Set<String> requestedTypes = spaceTypes.stream().map(String::toLowerCase).collect(Collectors.toSet());
+
+            filtered = filtered.stream().filter(listing -> {
+                List<ListingSpaceType> listingSpaceTypes =
+                        listingSpaceTypeRepository.findById_ListingId(listing.getId());
+                Set<String> dbTypes = listingSpaceTypes.stream()
+                        .map(lvt -> lvt.getId().getSpaceType().toLowerCase())
+                        .collect(Collectors.toSet());
+
+                return dbTypes.containsAll(requestedTypes);
+            }).toList();
+        }
 
         List<ListingDtos.ListingSearchResponse> listingSearchResponses = filtered.stream()
                 .map(listing -> {

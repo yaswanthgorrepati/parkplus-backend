@@ -59,7 +59,8 @@ public class ListingDtos {
     }
 
     public record ListingSearchQuery(
-            String type, String city, LocalDate sDate, LocalDate eDate, Integer qty, Integer page, Integer size
+            String type, String city, LocalDate sDate, LocalDate eDate, Integer qty, Integer page, Integer size,
+            List<String> vehicleTypes, List<String> facilityTypes, List<String> spaceTypes
     ) {
     }
 }

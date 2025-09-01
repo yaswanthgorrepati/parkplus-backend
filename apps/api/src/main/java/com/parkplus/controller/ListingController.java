@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
@@ -45,9 +46,15 @@ public class ListingController {
             @RequestParam(required = false, name = "eDate") String eDate,
             @RequestParam(required = false, name = "qty") Integer qty,
             @RequestParam(required = false, name = "page") Integer page,
-            @RequestParam(required = false, name = "size") Integer size) {
+            @RequestParam(required = false, name = "size") Integer size,
+            @RequestParam(required = false, name = "vehicleTypes") String vehicleTypes,
+            @RequestParam(required = false, name = "facilityTypes") String facilityTypes,
+            @RequestParam(required = false, name = "spaceTypes") String spaceTypes) {
         ListingDtos.ListingSearchQuery listingSearchQuery = new ListingDtos.ListingSearchQuery(type, city, sDate != null ? LocalDate.parse(sDate) : null,
-                eDate != null ? LocalDate.parse(eDate) : null, qty, page, size);
+                eDate != null ? LocalDate.parse(eDate) : null, qty, page, size,
+                vehicleTypes != null ? Arrays.asList(vehicleTypes.split(",")) : null,
+                facilityTypes != null ? Arrays.asList(facilityTypes.split(",")) : null,
+                spaceTypes != null ? Arrays.asList(spaceTypes.split(",")) : null);
 
         Page<ListingDtos.ListingSearchResponse> p = listingService.search(listingSearchQuery);
 
