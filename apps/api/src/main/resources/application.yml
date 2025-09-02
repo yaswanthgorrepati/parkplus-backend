@@ -29,4 +29,6 @@ spring:
   flyway:
     enabled: false
 
-
+razorpay:
+  keyId: rzp_test_RChQDN1VzNOw1S
+  keySecret: lyQrUPRwjV4g67c8mQQQ2dWQ

@@ -19,7 +19,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -137,7 +136,8 @@ public class ListingService {
         ListingDtos.Host host = new ListingDtos.Host(profile.getFirstName() + " " + profile.getLastName(), profile.getAvatarUrl(), hostDetails);
 
         return new ListingDtos.ListingDetailsResponse(
-                listing.getId().toString(), listing.getTitle(), listing.getDescription(), listing.getAccessibility(), listing.getCity(), listing.getState(),
+                listing.getId().toString(), listing.getTitle(), listing.getDescription(), listing.getAccessibility(),
+                listing.getAddressLine(), listing.getCity(), listing.getState(), listing.getPostalCode(),
                 listing.getBasePricePerDayPaise(), listing.getCurrency(), listing.getCapacitySpaces(), listingAmenities,
                 listingVehicleTypes, listingFaclityType, listingSpaceType, listingBadgeType, listingImages, host
         );

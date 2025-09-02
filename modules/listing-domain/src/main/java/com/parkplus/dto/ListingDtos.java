@@ -45,8 +45,8 @@ public class ListingDtos {
     }
 
     public record ListingDetailsResponse(
-            String id, String title, String description, String accessibility, String city, String state,
-            int basePricePerDayPaise, String currency, int capacitySpaces,
+            String id, String title, String description, String accessibility, String addressLine, String city,
+            String state, String postalCode, int basePricePerDayPaise, String currency, int capacitySpaces,
             List<String> amenities, List<String> vehicleTypes, List<String> facilityTypes,
             List<String> spaceTypes, List<String> badgeTypes, List<String> images, Host host
     ) {
