@@ -41,9 +41,9 @@ public class PaymentService {
     private ListingImageRepository listingImageRepository;
     @Autowired
     private AvailabilityCalendarRepository availabilityCalendarRepository;
-    @Value("${razorpay.keyId:}")
+    @Value("${razorpay.keyId:test}")
     private String keyId;
-    @Value("${razorpay.keySecret:}")
+    @Value("${razorpay.keySecret:secret}")
     private String keySecret;
 
     /**
