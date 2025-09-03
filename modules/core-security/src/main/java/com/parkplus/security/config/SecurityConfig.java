@@ -26,7 +26,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-                .cors(cors -> {})
+                .cors(cors -> {
+                })
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
@@ -34,16 +35,16 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                                 // bookings
                                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/bookings/preview").permitAll()
-                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/bookings").hasAnyRole("CUSTOMER","HOST","ADMIN")
-                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/bookings/*/decide").hasAnyRole("HOST","ADMIN")
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/bookings").hasAnyRole("CUSTOMER", "HOST", "ADMIN")
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/bookings/*/decide").hasAnyRole("HOST", "ADMIN")
                                 // listings
                                 .requestMatchers(HttpMethod.GET, "/api/v1/listings/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/v1/listings").hasAnyRole("HOST","ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/v1/listings").hasAnyRole("HOST", "ADMIN")
                                 //availability
-                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/listings/*/availability/**").hasAnyRole("HOST","ADMIN")
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/listings/*/availability/**").hasAnyRole("HOST", "ADMIN")
                                 //razor pay payment
-                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/payments/create-order").hasAnyRole("CUSTOMER","HOST","ADMIN")
-                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/payments/verify").hasAnyRole("CUSTOMER","HOST","ADMIN")
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/payments/create-order").hasAnyRole("CUSTOMER", "HOST", "ADMIN")
+                                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/payments/verify").hasAnyRole("CUSTOMER", "HOST", "ADMIN")
                                 //mastrData
                                 .requestMatchers(HttpMethod.GET, "/api/v1/master/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/v1/master/**").hasRole("ADMIN")
@@ -61,8 +62,9 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "https://parkplus-dttucdidx-yaswanths-projects-ad1935eb.vercel.app"));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173",
+                "https://parkplus-topaz.vercel.app"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
