@@ -21,4 +21,8 @@ spring.flyway.enabled: false
 
 server:
   port: 8080
-
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: ${KEY_STORE_PASS}
+    key-store-type: PKCS12
